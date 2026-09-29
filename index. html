@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
   <style>
-    body {
+i    body {
       font-family: Arial, sans-serif;
       background: #f2f2f2;
       padding: 20px;
