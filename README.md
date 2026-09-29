@@ -1,0 +1,2 @@
+# Scanner-id-pelanggan
+Magang 
