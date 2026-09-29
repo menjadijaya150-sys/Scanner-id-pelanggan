@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Scanner ID Pelanggan</title>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    #kamera {
+      background: #1976d2;
+      color: white;
+    }
+
+    #foto {
+      background: #555;
+      color: white;
+    }
+
+    #simpan {
+      background: #168a35;
+      color: white;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 450px;
+      margin: 15px auto;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 15px;
+      font-size: 18px;
+      border: 1px solid #aaa;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    #status {
+      margin: 15px 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>INPUT ID PELANGGAN</h2>
+
+  <button id="kamera" onclick="mulaiKamera()">
+    📷 SCAN DENGAN KAMERA
+  </button>
+
+  <button id="foto" onclick="document.getElementById('fileFoto').click()">
+    🖼️ PILIH FOTO BARCODE
+  </button>
+
+  <input
+    type="file"
+    id="fileFoto"
+    accept="image/*"
+    style="display:none"
+    onchange="scanFoto(event)"
+  >
+
+  <div id="reader"></div>
+
+  <input
+    type="text"
+    id="idPelanggan"
+    placeholder="ID Pelanggan"
+    autocomplete="off"
+  >
+
+  <button id="simpan" onclick="simpanData()">
+    💾 SIMPAN
+  </button>
+
+  <div id="status"></div>
+
+  <!-- Pengiriman data ke Google Apps Script -->
+  <form
+    id="formSimpan"
+    action="https://script.google.com/macros/s/AKfycbyoiEuE01oVxmuOpdyQt50bqCmJuLi93iYPLMlsv4cYQJ-fSps5671Db6gYz0u502LP9Q/exec"
+    method="POST"
+    target="frameSimpan"
+    style="display:none"
+  >
+    <input type="hidden" name="idPelanggan" id="nilaiID">
+  </form>
+
+  <iframe name="frameSimpan" style="display:none"></iframe>
+
+<script>
+
+let scanner = null;
+let sedangScan = false;
+
+function mulaiKamera() {
+
+  if (sedangScan) {
+    return;
+  }
+
+  scanner = new Html5Qrcode("reader");
+  sedangScan = true;
+
+  document.getElementById("status").innerText =
+    "📷 Arahkan kamera ke barcode ampere...";
+
+  scanner.start(
+    { facingMode: "environment" },
+
+    {
+      fps: 10,
+      qrbox: {
+        width: 320,
+        height: 160
+      }
+    },
+
+    function hasilScan(teks) {
+
+      document.getElementById("idPelanggan").value = teks;
+
+      document.getElementById("status").innerText =
+        "✅ Barcode terbaca: " + teks;
+
+      hentikanKamera();
+    },
+
+    function () {
+      // Tidak perlu menampilkan error setiap frame
+    }
+  ).catch(function(error) {
+
+    sedangScan = false;
+
+    document.getElementById("status").innerText =
+      "❌ Kamera tidak bisa dibuka. Izinkan akses kamera Chrome.";
+  });
+}
+
+
+function hentikanKamera() {
+
+  if (scanner && sedangScan) {
+
+    scanner.stop().then(function() {
+
+      sedangScan = false;
+
+    }).catch(function() {
+
+      sedangScan = false;
+
+    });
+  }
+}
+
+
+function scanFoto(event) {
+
+  const file = event.target.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  document.getElementById("status").innerText =
+    "🔍 Membaca barcode dari foto...";
+
+  const pembaca = new Html5Qrcode("reader");
+
+  pembaca.scanFile(file, true)
+    .then(function(teks) {
+
+      document.getElementById("idPelanggan").value = teks;
+
+      document.getElementById("status").innerText =
+        "✅ Barcode terbaca: " + teks;
+
+    })
+    .catch(function() {
+
+      document.getElementById("status").innerText =
+        "❌ Barcode tidak terbaca. Coba foto lebih dekat dan jelas.";
+    });
+}
+
+
+function simpanData() {
+
+  const id = document
+    .getElementById("idPelanggan")
+    .value
+    .trim();
+
+  if (!id) {
+
+    document.getElementById("status").innerText =
+      "⚠️ ID Pelanggan masih kosong.";
+
+    return;
+  }
+
+  document.getElementById("nilaiID").value = id;
+
+  document.getElementById("formSimpan").submit();
+
+  document.getElementById("status").innerText =
+    "✅ ID Pelanggan dikirim untuk disimpan.";
+
+  document.getElementById("idPelanggan").value = "";
+}
+
+</script>
+
+</body>
+</html>
